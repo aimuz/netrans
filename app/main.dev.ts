@@ -95,6 +95,7 @@ const createWindow = async () => {
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
+  /* eslint-disable no-new */
   new AppUpdater();
 };
 
