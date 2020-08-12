@@ -24,8 +24,6 @@ export default class AppUpdater {
   }
 }
 
-let mainWindow: BrowserWindow | null = null;
-
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
   sourceMapSupport.install();
@@ -48,6 +46,7 @@ const installExtensions = async () => {
   ).catch(console.log);
 };
 
+let mainWindowShow = () => {};
 const createWindow = async () => {
   if (
     process.env.NODE_ENV === 'development' ||
@@ -56,7 +55,7 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  mainWindow = new BrowserWindow({
+  const mainWindow = new BrowserWindow({
     show: false,
     width: 1024,
     height: 728,
@@ -73,9 +72,6 @@ const createWindow = async () => {
   });
 
   mainWindow.loadURL(`file://${__dirname}/app.html`);
-
-  // @TODO: Use 'ready-to-show' event
-  //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
   mainWindow.webContents.on('did-finish-load', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
@@ -88,15 +84,17 @@ const createWindow = async () => {
     }
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindowShow = mainWindow.show;
+  mainWindow.on('close', (event: any) => {
+    console.log(mainWindow.isClosable());
+    console.log(event);
+    mainWindow.hide();
+    event.preventDefault();
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
   new AppUpdater();
 };
 
@@ -104,23 +102,24 @@ const createWindow = async () => {
  * Add event listeners...
  */
 
-app.on('window-all-closed', () => {
-  // Respect the OSX convention of having the application in memory even
-  // after all windows have been closed
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+const appReady = () => {
+  createWindow();
+
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+      app.quit();
+    }
+  });
+
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    mainWindowShow();
+  });
+};
 
 if (process.env.E2E_BUILD === 'true') {
   // eslint-disable-next-line promise/catch-or-return
-  app.whenReady().then(createWindow);
+  app.whenReady().then(appReady);
 } else {
-  app.on('ready', createWindow);
+  app.on('ready', appReady);
 }
-
-app.on('activate', () => {
-  // On macOS it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createWindow();
-});
