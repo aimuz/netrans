@@ -46,7 +46,7 @@ const installExtensions = async () => {
   ).catch(console.log);
 };
 
-let mainWindowShow = () => {};
+// let mainWindowShow = () => {};
 const createWindow = async () => {
   if (
     process.env.NODE_ENV === 'development' ||
@@ -56,9 +56,9 @@ const createWindow = async () => {
   }
 
   const mainWindow = new BrowserWindow({
-    show: false,
-    width: 1024,
+    width: 500,
     height: 728,
+    title: 'Netrans - 网译云',
     webPreferences:
       (process.env.NODE_ENV === 'development' ||
         process.env.E2E_BUILD === 'true') &&
@@ -84,19 +84,16 @@ const createWindow = async () => {
     }
   });
 
-  mainWindowShow = mainWindow.show;
-  mainWindow.on('close', (event: any) => {
-    console.log(mainWindow.isClosable());
-    console.log(event);
-    mainWindow.hide();
-    event.preventDefault();
-  });
+  // mainWindowShow = mainWindow.show;
+  // mainWindow.on('close', (event: any) => {
+  //   console.log(mainWindow.isClosable());
+  //   console.log(event);
+  //   mainWindow.hide();
+  //   event.preventDefault();
+  // });
 
   const menuBuilder = new MenuBuilder(mainWindow);
   menuBuilder.buildMenu();
-
-  /* eslint-disable no-new */
-  new AppUpdater();
 };
 
 /**
@@ -114,7 +111,7 @@ const appReady = () => {
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
-    mainWindowShow();
+    // mainWindowShow();
   });
 };
 
